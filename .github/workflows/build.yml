@@ -13,25 +13,20 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential zstd wget curl
+          sudo apt install -y build-essential wget curl zstd
 
       - name: Download ImageBuilder
         run: |
-          wget https://downloads.openwrt.org/releases/24.10.0/targets/ramips/mt7621/openwrt-imagebuilder-24.10.0-ramips-mt7621.Linux-x86_64.tar.zst
-          tar --zstd -xf openwrt-imagebuilder-*.tar.zst
+          wget https://downloads.openwrt.org/releases/24.10.0/targets/ramips/mt7621/openwrt-imagebuilder-24.10.0-ramips-mt7621.Linux-x86_64.tar.zst -O ib.tar.zst
+          unzstd ib.tar.zst
+          tar -xf ib.tar
           mv openwrt-imagebuilder-* builder
 
       - name: Add Passwall repo + key
         run: |
           echo "src/gz passwall https://master.dl.sourceforge.net/project/openwrt-passwall-build/releases/packages-24.10/ramips/mt7621" >> builder/repositories.conf
           wget -O builder/passwall.pub https://master.dl.sourceforge.net/project/openwrt-passwall-build/passwall.pub
-          cd builder
-          ./scripts/opkg-key add passwall.pub
-
-      - name: Update feeds
-        run: |
-          cd builder
-          make info
+          cd builder && ./scripts/opkg-key add passwall.pub
 
       - name: Build firmware
         run: |
