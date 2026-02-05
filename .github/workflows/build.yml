@@ -1,0 +1,36 @@
+name: Build TR1200 Passwall1
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install deps
+        run: |
+          sudo apt update
+          sudo apt install -y zstd build-essential wget
+
+      - name: Download ImageBuilder
+        run: |
+          wget https://downloads.openwrt.org/releases/24.10.0/targets/ramips/mt7621/openwrt-imagebuilder-24.10.0-ramips-mt7621.Linux-x86_64.tar.zst
+          tar --zstd -xf openwrt-imagebuilder-24.10.0-ramips-mt7621.*
+          mv openwrt-imagebuilder-* builder
+
+      - name: Add Passwall repo
+        run: |
+          echo "src/gz passwall https://master.dl.sourceforge.net/project/openwrt-passwall-build/releases/packages-24.10/ramips/mt7621" >> builder/repositories.conf
+
+      - name: Build firmware
+        run: |
+          cd builder
+          make image PROFILE="cudy_tr1200-v1" \
+          PACKAGES="luci luci-ssl luci-app-passwall xray-core dnsmasq-full iptables iptables-mod-tproxy kmod-nft-tproxy ca-bundle curl"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: builder/bin/targets/ramips/mt7621/*sysupgrade.bin
